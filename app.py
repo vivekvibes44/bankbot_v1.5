@@ -9,13 +9,14 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
 # 2. Session state
 
 if "theme" not in st.session_state:
     st.session_state.theme = "Light"
 
-if "page_navigation" not in st.session_state:
-    st.session_state.page_navigation = "Dashboard"
+if "navigation_radio" not in st.session_state:
+    st.session_state.navigation_radio = "Dashboard"
 
 
 def navigate_to(page):
@@ -28,7 +29,7 @@ def apply_theme(theme):
     if theme == "Dark":
         background = "#101827"
         surface = "#1B293B"
-        text = "#F1F5F9"
+        text = "#5FABF7"
         muted = "#AEB6C0"
         border = "#34445A"
         accent = "#60A5FA"
@@ -152,15 +153,18 @@ with st.sidebar:
     st.divider()
 
     st.caption("Ready Bank")
-    st.caption("Demo environment: No real bank accounts, transactions or financial operations are connected.")
+    st.caption(
+        "Demo environment: No real bank accounts, transactions "
+        "or financial operations are connected."
+    )
 
 
 # Apply the selected theme
+
 apply_theme(st.session_state.theme)
 
 
 # 5. Dashboard homepage
-
 
 def show_dashboard():
 
@@ -251,47 +255,231 @@ def show_dashboard():
 # 6. Placeholder pages
 
 def show_placeholder(title, description):
+
     st.title(title)
     st.info(description)
     st.caption("This section will be implemented in a later milestone.")
 
 
-# 7. Page routing
+
+# 7. AI Assistant page
+
+def show_ai_assistant():
+
+    st.title("Ready Bank AI Assistant")
+
+    st.write(
+        "Your virtual banking assistant. Ask questions about "
+        "banking, loans, or your simulated banking activities."
+    )
+
+    st.divider()
+
+    # Initialize chat history
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = [
+            {
+                "role": "assistant",
+                "content": (
+                    "Hello! Welcome to Ready Bank. 👋\n\n"
+                    "I'm your virtual banking assistant. "
+                    "How can I help you today?"
+                ),
+            }
+        ]
+
+    # New Chat button
+
+    col1, col2 = st.columns([5, 1])
+
+    with col2:
+        if st.button("➕ New Chat", use_container_width=True):
+
+            st.session_state.chat_history = [
+                {
+                    "role": "assistant",
+                    "content": (
+                        "Hello! Welcome to Ready Bank. 👋\n\n"
+                        "I'm your virtual banking assistant. "
+                        "How can I help you today?"
+                    ),
+                }
+            ]
+
+            st.rerun()
+
+    # Agent activity panel
+
+    with st.expander("🤖 Agent Activity", expanded=False):
+
+        st.caption(
+            "Example workflow — live agent execution will be added later."
+        )
+
+        st.markdown(
+            """
+            1. **Understand request** — Identify the user's question.
+            2. **Select capability** — Determine which tool or knowledge source is needed.
+            3. **Process request** — Execute the required operation.
+            4. **Prepare response** — Format the result for the user.
+            """
+        )
+
+    # Suggested prompts
+
+    user_input = None
+
+    if len(st.session_state.chat_history) == 1:
+
+        st.subheader("Suggested questions")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            if st.button(
+                "🏦 What account options are available?",
+                use_container_width=True,
+            ):
+                user_input = "What account options are available?"
+
+            if st.button(
+                "🧮 Calculate my loan EMI",
+                use_container_width=True,
+            ):
+                user_input = "Calculate my loan EMI."
+
+        with col2:
+
+            if st.button(
+                "📋 What are the loan eligibility requirements?",
+                use_container_width=True,
+            ):
+                user_input = "What are the loan eligibility requirements?"
+
+            if st.button(
+                "📄 What documents are needed to open an account?",
+                use_container_width=True,
+            ):
+                user_input = "What documents are needed to open an account?"
+
+    # Chat input
+
+    typed_input = st.chat_input(
+        "Ask Ready Bank something..."
+    )
+
+    if typed_input:
+        user_input = typed_input
+
+    # Process user message
+
+    if user_input:
+
+        st.session_state.chat_history.append(
+            {
+                "role": "user",
+                "content": user_input,
+            }
+        )
+
+        # Temporary demo response
+
+        demo_response = (
+            "Thank you for your question!\n\n"
+            "I'm currently running in **UI demo mode**. "
+            "My banking knowledge, AI reasoning, and tools "
+            "will be connected in a later development milestone."
+        )
+
+        st.session_state.chat_history.append(
+            {
+                "role": "assistant",
+                "content": demo_response,
+            }
+        )
+
+    # Display conversation history
+
+    for message in st.session_state.chat_history:
+
+        with st.chat_message(message["role"]):
+
+            st.markdown(message["content"])
+
+            if message["role"] == "assistant":
+
+                # Sources section
+
+                with st.expander("📚 Sources"):
+
+                    st.caption(
+                        "Source citations will appear here when RAG is integrated."
+                    )
+
+                # Structured response preview
+
+                with st.expander("📊 Structured Result"):
+
+                    st.caption(
+                        "Depending on your request, the assistant "
+                        "will display structured results such as:"
+                    )
+
+                    st.markdown(
+                        """
+                        - **Banking information:** Details with source citations.
+                        - **Loan calculations:** EMI, interest and repayment breakdown.
+                        - **Loan eligibility:** Eligibility results and document checklists.
+                        """
+                    )
+
+                    st.caption(
+                        "These result types will be populated when the backend is integrated."
+                    )
+
+
+# 8. Page routing
 
 if selected_page == "Dashboard":
+
     show_dashboard()
 
 elif selected_page == "AI Assistant":
-    show_placeholder(
-        "AI Banking Assistant",
-        "Your conversational banking assistant will be built here.",
-    )
+
+    show_ai_assistant()
 
 elif selected_page == "Loans":
+
     show_placeholder(
         "Loan Services",
         "Explore loan eligibility, EMI calculations and loan comparisons.",
     )
 
 elif selected_page == "Transactions":
+
     show_placeholder(
         "Transaction Analysis",
         "View synthetic transactions and spending insights.",
     )
 
 elif selected_page == "Support":
+
     show_placeholder(
         "Customer Support",
         "Register and track simulated banking complaints.",
     )
 
 elif selected_page == "Activity":
+
     show_placeholder(
         "Activity History",
         "Review previous conversations and completed workflows.",
     )
 
 elif selected_page == "Settings":
+
     st.title("Settings")
     st.subheader("Appearance")
     st.write(f"Current theme: **{st.session_state.theme}**")
