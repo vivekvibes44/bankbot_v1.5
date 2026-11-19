@@ -7,9 +7,10 @@ from tools.loan_tools import (
     check_loan_eligibility,
     compare_loans
 )
+from tools.complaint_tools import track_complaint
 
 # 1. Define available tools
-tools = [calculate_emi, check_loan_eligibility, compare_loans]
+tools = [calculate_emi, check_loan_eligibility, compare_loans, track_complaint]
 
 
 # 2. Initialize LLM with tools
@@ -44,6 +45,16 @@ Available tools:
 3. compare_loans:
 Use this whenever the user wants to compare
 available Ready Bank loan products.
+
+4. track_complaint:
+   Use this whenever the user wants to check or track
+   an existing complaint.
+
+   Required input:
+   - complaint_id
+
+   Never invent a complaint ID.
+   Ask the user for the ID if it is missing.
 
 This tool requires no user inputs.
 
