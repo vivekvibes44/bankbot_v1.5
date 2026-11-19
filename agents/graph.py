@@ -1,14 +1,15 @@
 from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph, START, END, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
-from tools.loan_tools import calculate_emi, check_loan_eligibility
-
 from agents.llm import get_llm
-from tools.loan_tools import calculate_emi
-
+from tools.loan_tools import (
+    calculate_emi,
+    check_loan_eligibility,
+    compare_loans
+)
 
 # 1. Define available tools
-tools = [calculate_emi, check_loan_eligibility]
+tools = [calculate_emi, check_loan_eligibility, compare_loans]
 
 
 # 2. Initialize LLM with tools
@@ -40,6 +41,12 @@ Available tools:
    - age
    - monthly_income
 
+3. compare_loans:
+Use this whenever the user wants to compare
+available Ready Bank loan products.
+
+This tool requires no user inputs.
+
 Rules:
 1. Always use the appropriate tool for calculations and eligibility checks.
 2. Never calculate EMI or determine eligibility mentally.
@@ -50,6 +57,7 @@ Rules:
 7. Clearly explain eligibility results and their reasons.
 8. Eligibility checks are preliminary simulations, not loan approvals.
 9. Communicate clearly and professionally.
+10. Never invent loan interest rates or eligibility criteria. Use the loan tools for all loan-related comparisons.
 """
 
 

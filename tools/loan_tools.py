@@ -56,29 +56,6 @@ def calculate_emi(
     }
 
 
-# Fictional Ready Bank loan eligibility criteria
-
-LOAN_CRITERIA = {
-    "personal loan": {
-        "minimum_age": 21,
-        "maximum_age": 60,
-        "minimum_income": 25000
-    },
-    "home loan": {
-        "minimum_age": 21,
-        "maximum_age": 65,
-        "minimum_income": 40000
-    },
-    "education loan": {
-        "minimum_age": 18,
-        "maximum_age": 35,
-        "minimum_income": 15000
-    }
-}
-
-
-from langchain_core.tools import tool
-
 
 @tool
 def check_loan_eligibility(
@@ -111,23 +88,35 @@ def check_loan_eligibility(
         }
 
     if age <= 0:
-        return {"status": "invalid_input", "message": "Age must be greater than zero."}
+        return {
+            "status": "invalid_input",
+            "message": "Age must be greater than zero."
+        }
 
     if monthly_income < 0:
-        return {"status": "invalid_input", "message": "Income cannot be negative."}
+        return {
+            "status": "invalid_input",
+            "message": "Income cannot be negative."
+        }
 
     criteria = LOAN_CRITERIA[loan_type]
 
     reasons = []
 
     if age < criteria["minimum_age"]:
-        reasons.append("Applicant does not meet the minimum age requirement.")
+        reasons.append(
+            "Applicant does not meet the minimum age requirement."
+        )
 
     if age > criteria["maximum_age"]:
-        reasons.append("Applicant exceeds the maximum age requirement.")
+        reasons.append(
+            "Applicant exceeds the maximum age requirement."
+        )
 
     if monthly_income < criteria["minimum_income"]:
-        reasons.append("Monthly income is below the required minimum.")
+        reasons.append(
+            "Monthly income is below the required minimum."
+        )
 
     eligible = len(reasons) == 0
 
@@ -140,10 +129,81 @@ def check_loan_eligibility(
         "minimum_age": criteria["minimum_age"],
         "maximum_age": criteria["maximum_age"],
         "minimum_income": criteria["minimum_income"],
-        "reasons": reasons if reasons else ["All preliminary criteria are satisfied."],
+        "reasons": (
+            reasons if reasons
+            else ["All preliminary criteria are satisfied."]
+        ),
         "disclaimer": (
             "This is a simulated preliminary eligibility check, "
             "not a loan approval or financial decision."
         )
     }
 
+
+
+# Fictional Ready Bank loan eligibility criteria
+
+LOAN_CRITERIA = {
+    "personal loan": {
+        "minimum_age": 21,
+        "maximum_age": 60,
+        "minimum_income": 25000,
+        "interest_rate": 12.5,
+        "maximum_tenure_years": 5
+    },
+    "home loan": {
+        "minimum_age": 21,
+        "maximum_age": 65,
+        "minimum_income": 40000,
+        "interest_rate": 8.5,
+        "maximum_tenure_years": 30
+    },
+    "education loan": {
+        "minimum_age": 18,
+        "maximum_age": 35,
+        "minimum_income": 15000,
+        "interest_rate": 9.0,
+        "maximum_tenure_years": 10
+    }
+}
+
+
+@tool
+def compare_loans():
+    """
+    Compare all available Ready Bank loan products.
+
+    Returns:
+        Loan products with interest rates, eligibility
+        requirements and maximum repayment tenures,
+        sorted by interest rate.
+    """
+
+    comparison = []
+
+    for loan_name, criteria in LOAN_CRITERIA.items():
+
+        comparison.append({
+            "loan_type": loan_name.title(),
+            "minimum_age": criteria["minimum_age"],
+            "maximum_age": criteria["maximum_age"],
+            "minimum_monthly_income": criteria["minimum_income"],
+            "annual_interest_rate": criteria["interest_rate"],
+            "maximum_tenure_years": criteria["maximum_tenure_years"]
+        })
+
+    # Sort loans by annual interest rate (lowest first)
+    comparison.sort(
+        key=lambda loan: loan["annual_interest_rate"]
+    )
+
+    return {
+        "status": "success",
+        "comparison_basis": "Annual interest rate, lowest first",
+        "available_loans": comparison,
+        "disclaimer": (
+            "These are simulated Ready Bank loan products "
+            "and indicative rates for demonstration purposes. "
+            "Actual loan terms may differ."
+        )
+    }
