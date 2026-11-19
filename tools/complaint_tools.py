@@ -1,39 +1,61 @@
 from langchain_core.tools import tool
+from langgraph.types import interrupt
 
 from database.complaint_repository import (
     register_complaint as create_complaint_record,
-    get_complaint
+    get_complaint,
+    VALID_CATEGORIES
 )
 
 
 @tool
-def register_complaint(
-    category: str,
-    description: str,
-    user_confirmation: bool
-):
+def register_complaint(category: str, description: str):
     """
     Register a simulated Ready Bank complaint.
 
-    Only call this tool after the user has explicitly
-    confirmed that they want to submit the complaint.
+    This tool pauses execution and requests explicit human
+    approval before saving the complaint.
 
     Args:
         category: Complaint category.
         description: Description of the complaint.
-        user_confirmation: True only after explicit user confirmation.
 
     Returns:
-        Complaint registration result with a unique complaint ID.
+        Complaint registration result.
     """
 
-    if user_confirmation is not True:
+    category = category.strip()
+    description = description.strip()
+
+    # Validate before requesting approval.
+    if category not in VALID_CATEGORIES:
         return {
-            "status": "confirmation_required",
+            "status": "invalid_input",
             "message": (
-                "The user must explicitly confirm complaint "
-                "registration before submission."
+                f"Invalid category. Choose one of: "
+                f"{', '.join(VALID_CATEGORIES)}"
             )
+        }
+
+    if not description:
+        return {
+            "status": "invalid_input",
+            "message": "Complaint description cannot be empty."
+        }
+
+    # Pause graph execution and wait for human approval.
+    approval = interrupt({
+        "type": "complaint_registration",
+        "message": "Please review and confirm this complaint registration.",
+        "category": category,
+        "description": description
+    })
+
+    # Only an explicit approval allows database insertion.
+    if not isinstance(approval, dict) or approval.get("approved") is not True:
+        return {
+            "status": "cancelled",
+            "message": "Complaint registration was cancelled."
         }
 
     result = create_complaint_record(

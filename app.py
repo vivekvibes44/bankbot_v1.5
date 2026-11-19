@@ -1,4 +1,10 @@
 import streamlit as st
+import uuid
+
+from langchain_core.messages import HumanMessage
+from langgraph.types import Command
+
+from agents.graph import agent
 
 # 1. Page configuration
 
@@ -288,6 +294,13 @@ def show_ai_assistant():
                 ),
             }
         ]
+        # Initialize LangGraph thread ID
+    if "agent_thread_id" not in st.session_state:
+        st.session_state.agent_thread_id = str(uuid.uuid4())
+
+    # Initialize pending approval
+    if "pending_approval" not in st.session_state:
+        st.session_state.pending_approval = None
 
     # New Chat button
 
@@ -306,6 +319,9 @@ def show_ai_assistant():
                     ),
                 }
             ]
+
+            st.session_state.agent_thread_id = str(uuid.uuid4())
+            st.session_state.pending_approval = None
 
             st.rerun()
 
@@ -375,7 +391,9 @@ def show_ai_assistant():
 
     # Process user message
 
-    if user_input:
+        # Process user message
+
+    if user_input and not st.session_state.pending_approval:
 
         st.session_state.chat_history.append(
             {
@@ -384,21 +402,49 @@ def show_ai_assistant():
             }
         )
 
-        # Temporary demo response
-
-        demo_response = (
-            "Thank you for your question!\n\n"
-            "I'm currently running in **UI demo mode**. "
-            "My banking knowledge, AI reasoning, and tools "
-            "will be connected in a later development milestone."
-        )
-
-        st.session_state.chat_history.append(
-            {
-                "role": "assistant",
-                "content": demo_response,
+        config = {
+            "configurable": {
+                "thread_id": st.session_state.agent_thread_id
             }
-        )
+        }
+
+        try:
+
+            with st.spinner("Ready Bank Assistant is thinking..."):
+
+                result = agent.invoke(
+                    {
+                        "messages": [
+                            HumanMessage(content=user_input)
+                        ]
+                    },
+                    config=config
+                )
+
+            # Check whether the graph paused for approval.
+
+            interrupts = result.get("__interrupt__", [])
+
+            if interrupts:
+
+                st.session_state.pending_approval = (
+                    interrupts[0].value
+                )
+
+            else:
+
+                assistant_response = result["messages"][-1].content
+
+                st.session_state.chat_history.append(
+                    {
+                        "role": "assistant",
+                        "content": assistant_response,
+                    }
+                )
+
+        except Exception as e:
+
+            st.error(f"Something went wrong: {str(e)}")
 
     # Display conversation history
 
@@ -437,6 +483,114 @@ def show_ai_assistant():
 
                     st.caption(
                         "These result types will be populated when the backend is integrated."
+                    )
+        # Complaint registration approval interface
+
+    if st.session_state.pending_approval:
+
+        approval_data = st.session_state.pending_approval
+
+        st.divider()
+
+        st.subheader("📋 Complaint Registration Review")
+
+        st.warning(
+            "Please review your complaint details before registration."
+        )
+
+        st.markdown(f"""
+        **Complaint Category:** {approval_data["category"]}
+
+        **Description:** {approval_data["description"]}
+        """)
+
+        st.caption(
+            "Your complaint will only be saved after you approve it."
+        )
+
+        col1, col2 = st.columns(2)
+
+        config = {
+            "configurable": {
+                "thread_id": st.session_state.agent_thread_id
+            }
+        }
+
+        with col1:
+
+            if st.button(
+                "✅ Approve & Register",
+                use_container_width=True,
+                type="primary",
+                key="approve_complaint"
+            ):
+
+                try:
+
+                    with st.spinner("Registering your complaint..."):
+
+                        result = agent.invoke(
+                            Command(
+                                resume={"approved": True}
+                            ),
+                            config=config
+                        )
+
+                    st.session_state.pending_approval = None
+
+                    assistant_response = result["messages"][-1].content
+
+                    st.session_state.chat_history.append(
+                        {
+                            "role": "assistant",
+                            "content": assistant_response,
+                        }
+                    )
+
+                    st.rerun()
+
+                except Exception as e:
+
+                    st.error(
+                        f"Complaint registration failed: {str(e)}"
+                    )
+
+        with col2:
+
+            if st.button(
+                "❌ Reject",
+                use_container_width=True,
+                key="reject_complaint"
+            ):
+
+                try:
+
+                    with st.spinner("Cancelling complaint registration..."):
+
+                        result = agent.invoke(
+                            Command(
+                                resume={"approved": False}
+                            ),
+                            config=config
+                        )
+
+                    st.session_state.pending_approval = None
+
+                    assistant_response = result["messages"][-1].content
+
+                    st.session_state.chat_history.append(
+                        {
+                            "role": "assistant",
+                            "content": assistant_response,
+                        }
+                    )
+
+                    st.rerun()
+
+                except Exception as e:
+
+                    st.error(
+                        f"Unable to cancel registration: {str(e)}"
                     )
 
 

@@ -8,9 +8,15 @@ from tools.loan_tools import (
     compare_loans
 )
 from tools.complaint_tools import track_complaint
+from langgraph.checkpoint.memory import InMemorySaver
+
+from tools.complaint_tools import (
+    register_complaint,
+    track_complaint
+)
 
 # 1. Define available tools
-tools = [calculate_emi, check_loan_eligibility, compare_loans, track_complaint]
+tools = [calculate_emi, check_loan_eligibility, compare_loans, register_complaint, track_complaint]
 
 
 # 2. Initialize LLM with tools
@@ -46,7 +52,21 @@ Available tools:
 Use this whenever the user wants to compare
 available Ready Bank loan products.
 
-4. track_complaint:
+4. register_complaint:
+   Use this whenever the user explicitly wants to register
+   a complaint.
+
+   Required inputs:
+   - category
+   - description
+
+   Ask for missing information before calling the tool.
+   Never claim that a complaint has been registered until
+   the tool returns a successful result.
+   The tool will pause and request human approval.
+   Never attempt to approve the registration yourself.
+
+5. track_complaint:
    Use this whenever the user wants to check or track
    an existing complaint.
 
@@ -89,30 +109,17 @@ def assistant_node(state: MessagesState):
 
 # 5. Build the LangGraph workflow
 def build_agent():
-
     graph = StateGraph(MessagesState)
 
     graph.add_node("assistant", assistant_node)
+    graph.add_node("tools", ToolNode(tools))
 
-    graph.add_node(
-        "tools",
-        ToolNode(tools)
-    )
-
-    # Starting point
     graph.add_edge(START, "assistant")
-
-    # Decide whether to execute a tool or finish
-    graph.add_conditional_edges(
-        "assistant",
-        tools_condition
-    )
-
-    # Return tool results to the LLM
+    graph.add_conditional_edges("assistant", tools_condition)
     graph.add_edge("tools", "assistant")
 
-    return graph.compile()
+    checkpointer = InMemorySaver()
 
+    return graph.compile(checkpointer=checkpointer)
 
-# 6. Create the agent
 agent = build_agent()
