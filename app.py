@@ -1,12 +1,15 @@
+
 import streamlit as st
 import uuid
+import json
 
 from langchain_core.messages import HumanMessage
 from langgraph.types import Command
 
 from agents.graph import agent
 
-# 1. Page configuration
+
+# 1. PAGE CONFIGURATION
 
 st.set_page_config(
     page_title="Ready Bank | AI Banking Assistant",
@@ -16,7 +19,7 @@ st.set_page_config(
 )
 
 
-# 2. Session state
+# 2. SESSION STATE
 
 if "theme" not in st.session_state:
     st.session_state.theme = "Light"
@@ -24,22 +27,184 @@ if "theme" not in st.session_state:
 if "navigation_radio" not in st.session_state:
     st.session_state.navigation_radio = "Dashboard"
 
+if "agent_activity" not in st.session_state:
+    st.session_state.agent_activity = []
+
 
 def navigate_to(page):
     st.session_state.navigation_radio = page
 
 
-# 3. Theme styling
+# 3. AGENT ACTIVITY TRACKING
+
+def update_agent_activity(messages, pending_approval=False):
+    """
+    Capture actual LangGraph tool calls and tool results.
+
+    Tool calls are identified using tool_call_id to prevent
+    duplicate activity records when graph state is returned
+    multiple times.
+    """
+
+    activity = st.session_state.agent_activity
+
+    for message in messages or []:
+
+        # Capture LLM tool requests
+
+        for tool_call in getattr(message, "tool_calls", []) or []:
+
+            tool_name = tool_call.get("name", "Unknown tool")
+            tool_call_id = tool_call.get("id")
+
+            if not tool_call_id:
+                continue
+
+            existing = next(
+                (
+                    item for item in activity
+                    if item["tool_call_id"] == tool_call_id
+                ),
+                None
+            )
+
+            if existing is None:
+
+                activity.append({
+                    "tool_call_id": tool_call_id,
+                    "tool_name": tool_name,
+                    "arguments": tool_call.get("args", {}),
+                    "result": None,
+                    "status": "Requested",
+                })
+
+        # Capture actual tool results
+
+        tool_call_id = getattr(message, "tool_call_id", None)
+
+        if tool_call_id:
+
+            record = next(
+                (
+                    item for item in activity
+                    if item["tool_call_id"] == tool_call_id
+                ),
+                None
+            )
+
+            if record is None:
+                continue
+
+            tool_result = getattr(message, "content", "")
+
+            # Parse JSON-formatted results where possible.
+            parsed_result = tool_result
+
+            if isinstance(tool_result, str):
+
+                try:
+                    parsed_result = json.loads(tool_result)
+
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            record["result"] = parsed_result
+
+            tool_status = getattr(message, "status", None)
+
+            if tool_status == "error":
+
+                record["status"] = "Failed"
+
+            elif isinstance(parsed_result, dict):
+
+                result_status = parsed_result.get("status")
+
+                if result_status == "confirmation_required":
+
+                    record["status"] = "Pending approval"
+
+                elif result_status in ("rejected", "cancelled"):
+
+                    record["status"] = "Cancelled"
+
+                else:
+
+                    record["status"] = "Completed"
+
+            else:
+
+                record["status"] = "Completed"
+
+    # Mark tools awaiting human approval
+
+    if pending_approval:
+
+        for record in activity:
+
+            if record["status"] == "Requested":
+                record["status"] = "Pending approval"
+
+
+def render_agent_activity(limit=None):
+
+    activity = st.session_state.get("agent_activity", [])
+
+    if not activity:
+
+        st.info("No agent tool executions recorded yet.")
+        return
+
+    # Display newest activity first.
+    records = list(reversed(activity))
+
+    if limit is not None:
+        records = records[:limit]
+
+    for record in records:
+
+        title = (
+            f"{record['tool_name']} — {record['status']}"
+        )
+
+        with st.expander(title, expanded=False):
+
+            st.markdown("**Input Arguments**")
+
+            st.json(record["arguments"])
+
+            st.markdown("**Tool Result**")
+
+            if record["result"] is None:
+
+                st.caption(
+                    "The tool has not returned a result yet."
+                )
+
+            elif isinstance(record["result"], (dict, list)):
+
+                st.json(record["result"])
+
+            else:
+
+                st.write(record["result"])
+
+
+# 4. THEME STYLING
 
 def apply_theme(theme):
+
     if theme == "Dark":
+
         background = "#101827"
         surface = "#1B293B"
         text = "#5FABF7"
         muted = "#AEB6C0"
         border = "#34445A"
         accent = "#60A5FA"
+
     else:
+
         background = "#F5F7FB"
         surface = "#FFFFFF"
         text = "#172B4D"
@@ -117,7 +282,7 @@ def apply_theme(theme):
     )
 
 
-# 4. Sidebar and navigation
+# 5. SIDEBAR AND NAVIGATION
 
 with st.sidebar:
 
@@ -154,23 +319,24 @@ with st.sidebar:
         value=st.session_state.theme == "Dark",
     )
 
-    st.session_state.theme = "Dark" if selected_theme else "Light"
+    st.session_state.theme = (
+        "Dark" if selected_theme else "Light"
+    )
 
     st.divider()
 
     st.caption("Ready Bank")
+
     st.caption(
         "Demo environment: No real bank accounts, transactions "
         "or financial operations are connected."
     )
 
-
-# Apply the selected theme
-
+# Apply selected theme
 apply_theme(st.session_state.theme)
 
 
-# 5. Dashboard homepage
+# 6. DASHBOARD HOMEPAGE
 
 def show_dashboard():
 
@@ -221,6 +387,7 @@ def show_dashboard():
     col1, col2 = st.columns(2)
 
     with col1:
+
         st.button(
             "🧮 EMI Calculator",
             use_container_width=True,
@@ -236,6 +403,7 @@ def show_dashboard():
         )
 
     with col2:
+
         st.button(
             "📋 Loan Eligibility",
             use_container_width=True,
@@ -258,17 +426,19 @@ def show_dashboard():
     )
 
 
-# 6. Placeholder pages
+# 7. PLACEHOLDER PAGES
 
 def show_placeholder(title, description):
 
     st.title(title)
     st.info(description)
-    st.caption("This section will be implemented in a later milestone.")
+
+    st.caption(
+        "This section will be implemented in a later milestone."
+    )
 
 
-
-# 7. AI Assistant page
+# 8. AI ASSISTANT PAGE
 
 def show_ai_assistant():
 
@@ -284,6 +454,7 @@ def show_ai_assistant():
     # Initialize chat history
 
     if "chat_history" not in st.session_state:
+
         st.session_state.chat_history = [
             {
                 "role": "assistant",
@@ -294,12 +465,17 @@ def show_ai_assistant():
                 ),
             }
         ]
-        # Initialize LangGraph thread ID
+
+    # Initialize LangGraph thread ID
+
     if "agent_thread_id" not in st.session_state:
+
         st.session_state.agent_thread_id = str(uuid.uuid4())
 
     # Initialize pending approval
+
     if "pending_approval" not in st.session_state:
+
         st.session_state.pending_approval = None
 
     # New Chat button
@@ -307,7 +483,11 @@ def show_ai_assistant():
     col1, col2 = st.columns([5, 1])
 
     with col2:
-        if st.button("➕ New Chat", use_container_width=True):
+
+        if st.button(
+            "➕ New Chat",
+            use_container_width=True
+        ):
 
             st.session_state.chat_history = [
                 {
@@ -321,26 +501,20 @@ def show_ai_assistant():
             ]
 
             st.session_state.agent_thread_id = str(uuid.uuid4())
+
             st.session_state.pending_approval = None
 
             st.rerun()
 
-    # Agent activity panel
+    # Agent Activity panel
 
     with st.expander("🤖 Agent Activity", expanded=False):
 
         st.caption(
-            "Example workflow — live agent execution will be added later."
+            "Actual LangGraph tool execution history."
         )
 
-        st.markdown(
-            """
-            1. **Understand request** — Identify the user's question.
-            2. **Select capability** — Determine which tool or knowledge source is needed.
-            3. **Process request** — Execute the required operation.
-            4. **Prepare response** — Format the result for the user.
-            """
-        )
+        render_agent_activity(limit=5)
 
     # Suggested prompts
 
@@ -358,12 +532,16 @@ def show_ai_assistant():
                 "🏦 What account options are available?",
                 use_container_width=True,
             ):
-                user_input = "What account options are available?"
+
+                user_input = (
+                    "What account options are available?"
+                )
 
             if st.button(
                 "🧮 Calculate my loan EMI",
                 use_container_width=True,
             ):
+
                 user_input = "Calculate my loan EMI."
 
         with col2:
@@ -372,13 +550,19 @@ def show_ai_assistant():
                 "📋 What are the loan eligibility requirements?",
                 use_container_width=True,
             ):
-                user_input = "What are the loan eligibility requirements?"
+
+                user_input = (
+                    "What are the loan eligibility requirements?"
+                )
 
             if st.button(
                 "📄 What documents are needed to open an account?",
                 use_container_width=True,
             ):
-                user_input = "What documents are needed to open an account?"
+
+                user_input = (
+                    "What documents are needed to open an account?"
+                )
 
     # Chat input
 
@@ -390,8 +574,6 @@ def show_ai_assistant():
         user_input = typed_input
 
     # Process user message
-
-        # Process user message
 
     if user_input and not st.session_state.pending_approval:
 
@@ -410,7 +592,9 @@ def show_ai_assistant():
 
         try:
 
-            with st.spinner("Ready Bank Assistant is thinking..."):
+            with st.spinner(
+                "Ready Bank Assistant is thinking..."
+            ):
 
                 result = agent.invoke(
                     {
@@ -421,9 +605,16 @@ def show_ai_assistant():
                     config=config
                 )
 
-            # Check whether the graph paused for approval.
+            # Check whether graph paused for approval.
 
             interrupts = result.get("__interrupt__", [])
+
+            # Record actual tool calls and results.
+
+            update_agent_activity(
+                result.get("messages", []),
+                pending_approval=bool(interrupts)
+            )
 
             if interrupts:
 
@@ -433,7 +624,9 @@ def show_ai_assistant():
 
             else:
 
-                assistant_response = result["messages"][-1].content
+                assistant_response = (
+                    result["messages"][-1].content
+                )
 
                 st.session_state.chat_history.append(
                     {
@@ -444,7 +637,9 @@ def show_ai_assistant():
 
         except Exception as e:
 
-            st.error(f"Something went wrong: {str(e)}")
+            st.error(
+                f"Something went wrong: {str(e)}"
+            )
 
     # Display conversation history
 
@@ -484,7 +679,8 @@ def show_ai_assistant():
                     st.caption(
                         "These result types will be populated when the backend is integrated."
                     )
-        # Complaint registration approval interface
+
+    # Complaint registration approval interface
 
     if st.session_state.pending_approval:
 
@@ -516,6 +712,8 @@ def show_ai_assistant():
             }
         }
 
+        # Approve complaint
+
         with col1:
 
             if st.button(
@@ -527,7 +725,9 @@ def show_ai_assistant():
 
                 try:
 
-                    with st.spinner("Registering your complaint..."):
+                    with st.spinner(
+                        "Registering your complaint..."
+                    ):
 
                         result = agent.invoke(
                             Command(
@@ -536,9 +736,16 @@ def show_ai_assistant():
                             config=config
                         )
 
+                    # Update existing tool activity record.
+                    update_agent_activity(
+                        result.get("messages", [])
+                    )
+
                     st.session_state.pending_approval = None
 
-                    assistant_response = result["messages"][-1].content
+                    assistant_response = (
+                        result["messages"][-1].content
+                    )
 
                     st.session_state.chat_history.append(
                         {
@@ -555,6 +762,8 @@ def show_ai_assistant():
                         f"Complaint registration failed: {str(e)}"
                     )
 
+        # Reject complaint
+
         with col2:
 
             if st.button(
@@ -565,7 +774,9 @@ def show_ai_assistant():
 
                 try:
 
-                    with st.spinner("Cancelling complaint registration..."):
+                    with st.spinner(
+                        "Cancelling complaint registration..."
+                    ):
 
                         result = agent.invoke(
                             Command(
@@ -574,9 +785,17 @@ def show_ai_assistant():
                             config=config
                         )
 
+                    # Update existing tool activity record.
+
+                    update_agent_activity(
+                        result.get("messages", [])
+                    )
+
                     st.session_state.pending_approval = None
 
-                    assistant_response = result["messages"][-1].content
+                    assistant_response = (
+                        result["messages"][-1].content
+                    )
 
                     st.session_state.chat_history.append(
                         {
@@ -594,7 +813,7 @@ def show_ai_assistant():
                     )
 
 
-# 8. Page routing
+# 9. PAGE ROUTING
 
 if selected_page == "Dashboard":
 
@@ -627,14 +846,27 @@ elif selected_page == "Support":
 
 elif selected_page == "Activity":
 
-    show_placeholder(
-        "Activity History",
-        "Review previous conversations and completed workflows.",
+    st.title("Activity History")
+
+    st.write(
+        "Review the tools selected by the AI agent, "
+        "their inputs, outputs and execution status."
     )
+
+    st.divider()
+
+    render_agent_activity()
 
 elif selected_page == "Settings":
 
     st.title("Settings")
+
     st.subheader("Appearance")
-    st.write(f"Current theme: **{st.session_state.theme}**")
-    st.caption("Additional application settings will be added later.")
+
+    st.write(
+        f"Current theme: **{st.session_state.theme}**"
+    )
+
+    st.caption(
+        "Additional application settings will be added later."
+    )
