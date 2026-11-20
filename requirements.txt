@@ -3,3 +3,4 @@ langchain-groq
 python-dotenv
 langgraph
 pypdf
+langchain-text-splitters
