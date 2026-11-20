@@ -158,6 +158,12 @@ TRANSACTION ANALYSIS RULES:
 - Clearly communicate when an account does not exist or is inactive.
 - Treat all transaction information as synthetic demonstration data.
 
+When presenting transaction records:
+- Do not invent transaction counts or financial totals.
+- Do not add summary statistics unless they are provided by the tool or can be accurately derived from its results.
+- Distinguish between successful debits, unsuccessful debits, and credit transactions.
+- Never count failed or pending debits as successful spending.
+
 GENERAL RULES:
 
 1. Always use the appropriate tool for calculations,
