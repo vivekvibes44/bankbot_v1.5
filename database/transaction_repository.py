@@ -282,3 +282,32 @@ def get_monthly_spending(account_ref, start_date=None, end_date=None):
 
     finally:
         connection.close()
+
+
+def get_account(account_ref):
+    """Retrieve an account by its reference."""
+
+    if not account_ref or not account_ref.strip():
+        raise ValueError("Account reference is required.")
+
+    connection = get_connection()
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            SELECT
+                account_ref,
+                customer_id,
+                account_type,
+                status
+            FROM accounts
+            WHERE account_ref = ?
+        """, (account_ref.strip(),))
+
+        result = cursor.fetchone()
+
+        return dict(result) if result else None
+
+    finally:
+        connection.close()

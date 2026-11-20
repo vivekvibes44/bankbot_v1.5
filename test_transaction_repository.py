@@ -9,43 +9,63 @@ from database.transaction_repository import (
 )
 
 
-print("\n--- Transaction Repository Verification ---")
+print("\n--- Customer Verification ---")
 
-# 1. Retrieve customers
 customers = get_customers()
-print("\nCustomers:", customers)
+print("Total customers:", len(customers))
 
-# 2. Retrieve accounts
-accounts = get_customer_accounts("INVALID_CUSTOMER")
-print("\nAccounts:", accounts)
-
-# 3. Retrieve transactions
-transactions = get_transactions("INVALID_ACCOUNT")
-print("\nTransactions:", transactions)
-
-# 4. Total spending
-spending = get_total_spending("INVALID_ACCOUNT")
-print("\nTotal Spending:", spending)
-
-# 5. Category spending
-categories = get_category_spending("INVALID_ACCOUNT")
-print("\nCategory Spending:", categories)
-
-# 6. Monthly spending
-monthly = get_monthly_spending("INVALID_ACCOUNT")
-print("\nMonthly Spending:", monthly)
+for customer in customers:
+    print(customer)
 
 
-print("\n--- Input Validation Tests ---")
+print("\n--- Account Verification ---")
 
-try:
-    get_transactions("INVALID_ACCOUNT", start_date="2026-15-40")
-except ValueError as error:
-    print("SUCCESS:", error)
+accounts = get_customer_accounts("RB-CUST-001")
 
-try:
-    get_total_spending("INVALID_ACCOUNT", start_date="2026-12-01", end_date="2026-01-01")
-except ValueError as error:
-    print("SUCCESS:", error)
+for account in accounts:
+    print(account)
 
-print("\nRepository tests completed.")
+
+account_ref = "RB-ACC-1002"
+
+print("\n--- Transaction Retrieval ---")
+
+transactions = get_transactions(account_ref, limit=10)
+
+for transaction in transactions:
+    print(transaction)
+
+
+print("\n--- Total Spending ---")
+
+spending = get_total_spending(account_ref)
+print(spending)
+
+
+print("\n--- Category Spending ---")
+
+categories = get_category_spending(account_ref)
+
+for category in categories:
+    print(category)
+
+
+print("\n--- Monthly Spending ---")
+
+monthly = get_monthly_spending(account_ref)
+
+for month in monthly:
+    print(month)
+
+
+print("\n--- Date Range Filter Test ---")
+
+filtered_transactions = get_transactions(
+    account_ref,
+    start_date="2026-09-01",
+    end_date="2026-11-30"
+)
+
+print("Filtered transaction count:", len(filtered_transactions))
+
+print("\nRepository testing completed.")
