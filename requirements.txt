@@ -4,3 +4,5 @@ python-dotenv
 langgraph
 pypdf
 langchain-text-splitters
+langchain-openai
+faiss-cpu
