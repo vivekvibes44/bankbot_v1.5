@@ -4,6 +4,8 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from agents.llm import get_llm
 from langgraph.checkpoint.memory import InMemorySaver
 
+from tools.rag_tools import search_banking_knowledge
+
 from tools.loan_tools import (
     calculate_emi,
     check_loan_eligibility,
@@ -34,7 +36,9 @@ tools = [
     get_account_transactions,
     get_spending_summary,
     get_category_spending,
-    get_monthly_spending
+    get_monthly_spending,
+
+    search_banking_knowledge
 ]
 
 # 2. Initialize LLM with tools
@@ -145,6 +149,30 @@ AVAILABLE TOOLS:
    - start_date
    - end_date
 
+10. search_banking_knowledge:
+
+   Use this tool whenever the user asks about:
+   - Ready Bank account features and services.
+   - Savings account requirements.
+   - Banking fees and charges.
+   - Digital banking services.
+   - Account opening requirements.
+   - General Ready Bank banking policies and FAQs.
+
+   Always use this tool for banking policy and product
+   information instead of relying on your own knowledge.
+
+   Do not invent banking information if the knowledge
+   base does not contain the answer.
+
+   Use the retrieved answer as the source of truth.
+
+   Clearly communicate when requested information
+   is unavailable in the knowledge base.
+
+   Preserve the source information returned by the tool.
+
+   
 TRANSACTION ANALYSIS RULES:
 
 - Always use transaction tools for transaction-related questions.
