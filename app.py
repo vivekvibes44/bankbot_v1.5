@@ -146,24 +146,34 @@ def update_agent_activity(messages, pending_approval=False):
                 record["status"] = "Pending approval"
 
 
+
 def extract_structured_results(messages):
     """
-    Extract actual tool results from LangGraph messages
-    for display in the Structured Result panel.
+    Extract tool results generated during the latest user turn only.
     """
 
     structured_results = []
 
+    messages = messages or []
+
+    # Find the most recent user message.
+    last_human_index = None
+
+    for index, message in enumerate(messages):
+        if getattr(message, "type", None) == "human":
+            last_human_index = index
+
+    # Ignore all messages from earlier turns.
+    if last_human_index is not None:
+        messages = messages[last_human_index:]
+
     # Map tool call IDs to their tool names.
     tool_names = {}
 
-    for message in messages or []:
+    for message in messages:
 
         for tool_call in getattr(message, "tool_calls", []) or []:
-
-            tool_names[tool_call.get("id")] = (
-                tool_call.get("name")
-            )
+            tool_names[tool_call.get("id")] = tool_call.get("name")
 
         # Capture the corresponding tool result.
         tool_call_id = getattr(message, "tool_call_id", None)
@@ -180,10 +190,8 @@ def extract_structured_results(messages):
 
         # Parse JSON results where possible.
         if isinstance(tool_result, str):
-
             try:
                 tool_result = json.loads(tool_result)
-
             except (json.JSONDecodeError, TypeError):
                 pass
 
@@ -209,6 +217,8 @@ def render_structured_result(structured_results):
         if not isinstance(result, dict):
             st.write(result)
             continue
+
+        # 1. EMI Calculation
 
         if tool_name == "calculate_emi":
 
@@ -250,9 +260,104 @@ def render_structured_result(structured_results):
                 f"₹{result.get('total_payment', 0):,.2f}"
             )
 
+        # 2. Loan Comparison
+
+        elif tool_name == "compare_loans":
+
+            st.markdown("### 📊 Ready Bank Loan Comparison")
+
+            available_loans = result.get("available_loans", [])
+
+            if available_loans:
+
+                st.table(available_loans)
+
+            else:
+                st.info("No loan comparison data is available.")
+
+            if result.get("comparison_basis"):
+                st.caption(
+                    f"Comparison basis: {result['comparison_basis']}"
+                )
+
+            if result.get("disclaimer"):
+                st.caption(result["disclaimer"])
+
+        # 3. Loan Eligibility
+
+        elif tool_name == "check_loan_eligibility":
+
+            st.markdown("### 📋 Loan Eligibility Assessment")
+
+            loan_type = result.get("loan_type", "Loan")
+            status = result.get("status", "Not available")
+            eligibility = result.get("preliminary_eligibility")
+            if eligibility is True:
+                eligibility_label = "Eligible"
+
+            elif eligibility is False:
+                eligibility_label = "Not eligible"
+
+            else:
+                eligibility_label = "Not available"
+
+            st.write(f"**Loan Type:** {loan_type}")
+
+            col1, col2 = st.columns(2)
+
+            col1.metric("Status", str(status))
+
+            col2.metric(
+                "Preliminary Eligibility",
+                eligibility_label
+            )
+
+            reasons = result.get("reasons", [])
+
+            if reasons:
+
+                st.markdown("**Assessment Details**")
+
+                for reason in reasons:
+                    st.write(f"- {reason}")
+
+            if result.get("disclaimer"):
+                st.caption(result["disclaimer"])
+
+            with st.expander("View Complete Eligibility Details"):
+                st.json(result)
+
+        # 4. Account Transaction History
+        elif tool_name == "get_account_transactions":
+
+            st.subheader("💳 Account Transaction History")
+
+            if result.get("status") != "success":
+                st.warning(
+                    result.get("message", "Unable to retrieve transactions.")
+                )
+
+            else:
+                st.caption(
+                    f"Account Reference: {result.get('account_ref')}"
+                )
+
+                st.metric(
+                    "Total Transactions",
+                    result.get("transaction_count", 0)
+                )
+
+                transactions = result.get("transactions", [])
+
+                if transactions:
+                    st.table(transactions)
+
+                else:
+                    st.info("No transactions found for the selected criteria.")
+        
+        # 5. Other Tools
         else:
 
-            st.markdown(f"**{tool_name} Result**")
             st.json(result)
 
 
