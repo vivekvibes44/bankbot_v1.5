@@ -146,6 +146,116 @@ def update_agent_activity(messages, pending_approval=False):
                 record["status"] = "Pending approval"
 
 
+def extract_structured_results(messages):
+    """
+    Extract actual tool results from LangGraph messages
+    for display in the Structured Result panel.
+    """
+
+    structured_results = []
+
+    # Map tool call IDs to their tool names.
+    tool_names = {}
+
+    for message in messages or []:
+
+        for tool_call in getattr(message, "tool_calls", []) or []:
+
+            tool_names[tool_call.get("id")] = (
+                tool_call.get("name")
+            )
+
+        # Capture the corresponding tool result.
+        tool_call_id = getattr(message, "tool_call_id", None)
+
+        if not tool_call_id:
+            continue
+
+        tool_name = tool_names.get(tool_call_id)
+
+        if not tool_name:
+            continue
+
+        tool_result = getattr(message, "content", None)
+
+        # Parse JSON results where possible.
+        if isinstance(tool_result, str):
+
+            try:
+                tool_result = json.loads(tool_result)
+
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        structured_results.append({
+            "tool_name": tool_name,
+            "result": tool_result,
+        })
+
+    return structured_results
+
+
+def render_structured_result(structured_results):
+
+    if not structured_results:
+        st.caption("No structured result available for this response.")
+        return
+
+    for item in structured_results:
+
+        tool_name = item.get("tool_name")
+        result = item.get("result")
+
+        if not isinstance(result, dict):
+            st.write(result)
+            continue
+
+        if tool_name == "calculate_emi":
+
+            st.markdown("### 🧮 Loan EMI Breakdown")
+
+            col1, col2, col3 = st.columns(3)
+
+            col1.metric(
+                "Loan Amount",
+                f"₹{result.get('loan_amount', 0):,.2f}"
+            )
+
+            col2.metric(
+                "Annual Interest Rate",
+                f"{result.get('annual_interest_rate', 0)}%"
+            )
+
+            col3.metric(
+                "Tenure",
+                f"{result.get('tenure_months', 0)} months"
+            )
+
+            st.divider()
+
+            col1, col2, col3 = st.columns(3)
+
+            col1.metric(
+                "Monthly EMI",
+                f"₹{result.get('monthly_emi', 0):,.2f}"
+            )
+
+            col2.metric(
+                "Total Interest",
+                f"₹{result.get('total_interest', 0):,.2f}"
+            )
+
+            col3.metric(
+                "Total Repayment",
+                f"₹{result.get('total_payment', 0):,.2f}"
+            )
+
+        else:
+
+            st.markdown(f"**{tool_name} Result**")
+            st.json(result)
+
+
 def render_agent_activity(limit=None):
 
     activity = st.session_state.get("agent_activity", [])
@@ -452,9 +562,7 @@ def show_ai_assistant():
     st.divider()
 
     # Initialize chat history
-
     if "chat_history" not in st.session_state:
-
         st.session_state.chat_history = [
             {
                 "role": "assistant",
@@ -467,23 +575,17 @@ def show_ai_assistant():
         ]
 
     # Initialize LangGraph thread ID
-
     if "agent_thread_id" not in st.session_state:
-
         st.session_state.agent_thread_id = str(uuid.uuid4())
 
     # Initialize pending approval
-
     if "pending_approval" not in st.session_state:
-
         st.session_state.pending_approval = None
 
     # New Chat button
-
     col1, col2 = st.columns([5, 1])
 
     with col2:
-
         if st.button(
             "➕ New Chat",
             use_container_width=True
@@ -507,7 +609,6 @@ def show_ai_assistant():
             st.rerun()
 
     # Agent Activity panel
-
     with st.expander("🤖 Agent Activity", expanded=False):
 
         st.caption(
@@ -517,7 +618,6 @@ def show_ai_assistant():
         render_agent_activity(limit=5)
 
     # Suggested prompts
-
     user_input = None
 
     if len(st.session_state.chat_history) == 1:
@@ -565,7 +665,6 @@ def show_ai_assistant():
                 )
 
     # Chat input
-
     typed_input = st.chat_input(
         "Ask Ready Bank something..."
     )
@@ -574,7 +673,6 @@ def show_ai_assistant():
         user_input = typed_input
 
     # Process user message
-
     if user_input and not st.session_state.pending_approval:
 
         st.session_state.chat_history.append(
@@ -606,11 +704,9 @@ def show_ai_assistant():
                 )
 
             # Check whether graph paused for approval.
-
             interrupts = result.get("__interrupt__", [])
 
             # Record actual tool calls and results.
-
             update_agent_activity(
                 result.get("messages", []),
                 pending_approval=bool(interrupts)
@@ -632,8 +728,14 @@ def show_ai_assistant():
                     {
                         "role": "assistant",
                         "content": assistant_response,
+                        "structured_results": extract_structured_results(
+                            result.get("messages", [])
+                        ),
                     }
                 )
+
+            # Refresh the page to display updated Agent Activity.
+            st.rerun()
 
         except Exception as e:
 
@@ -642,7 +744,6 @@ def show_ai_assistant():
             )
 
     # Display conversation history
-
     for message in st.session_state.chat_history:
 
         with st.chat_message(message["role"]):
@@ -652,36 +753,21 @@ def show_ai_assistant():
             if message["role"] == "assistant":
 
                 # Sources section
-
                 with st.expander("📚 Sources"):
 
                     st.caption(
                         "Source citations will appear here when RAG is integrated."
                     )
 
-                # Structured response preview
+                # Structured Result
 
                 with st.expander("📊 Structured Result"):
 
-                    st.caption(
-                        "Depending on your request, the assistant "
-                        "will display structured results such as:"
-                    )
-
-                    st.markdown(
-                        """
-                        - **Banking information:** Details with source citations.
-                        - **Loan calculations:** EMI, interest and repayment breakdown.
-                        - **Loan eligibility:** Eligibility results and document checklists.
-                        """
-                    )
-
-                    st.caption(
-                        "These result types will be populated when the backend is integrated."
+                    render_structured_result(
+                        message.get("structured_results", [])
                     )
 
     # Complaint registration approval interface
-
     if st.session_state.pending_approval:
 
         approval_data = st.session_state.pending_approval
@@ -713,7 +799,6 @@ def show_ai_assistant():
         }
 
         # Approve complaint
-
         with col1:
 
             if st.button(
@@ -751,6 +836,9 @@ def show_ai_assistant():
                         {
                             "role": "assistant",
                             "content": assistant_response,
+                            "structured_results": extract_structured_results(
+                                result.get("messages", [])
+                            ),
                         }
                     )
 
@@ -763,7 +851,6 @@ def show_ai_assistant():
                     )
 
         # Reject complaint
-
         with col2:
 
             if st.button(
@@ -786,7 +873,6 @@ def show_ai_assistant():
                         )
 
                     # Update existing tool activity record.
-
                     update_agent_activity(
                         result.get("messages", [])
                     )
@@ -801,6 +887,9 @@ def show_ai_assistant():
                         {
                             "role": "assistant",
                             "content": assistant_response,
+                            "structured_results": extract_structured_results(
+                                result.get("messages", [])
+                            ),
                         }
                     )
 
