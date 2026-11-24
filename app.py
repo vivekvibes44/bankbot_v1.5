@@ -354,8 +354,96 @@ def render_structured_result(structured_results):
 
                 else:
                     st.info("No transactions found for the selected criteria.")
+
         
-        # 5. Other Tools
+        # 5. Account Spending Summary
+        elif tool_name == "get_spending_summary":
+
+            st.subheader("📊 Account Spending Summary")
+
+            if result.get("status") != "success":
+                st.warning(
+                    result.get("message", "Unable to retrieve spending summary.")
+                )
+
+            else:
+                st.caption(
+                    f"Account Reference: {result.get('account_ref')}"
+                )
+
+                col1, col2 = st.columns(2)
+
+                col1.metric(
+                    "Total Successful Spending",
+                    f"₹{result.get('total_spending', 0):,.2f}"
+                )
+
+                col2.metric(
+                    "Successful Debit Transactions",
+                    result.get("transaction_count", 0)
+                )
+
+                st.caption(
+                    "Only successful debit transactions are included."
+                )
+
+        
+        # 6. Category-wise Spending
+        elif tool_name == "get_category_spending":
+
+            st.subheader("📊 Category-wise Spending")
+
+            if result.get("status") != "success":
+                st.warning(
+                    result.get("message", "Unable to retrieve category spending.")
+                )
+
+            else:
+                st.caption(
+                    f"Account Reference: {result.get('account_ref')}"
+                )
+
+                categories = result.get("categories", [])
+
+                if categories:
+                    st.table(categories)
+
+                else:
+                    st.info("No category-wise spending found.")
+
+                st.caption(
+                    "Only successful debit transactions are included."
+                )
+        
+        
+        # 7. Monthly Spending
+        elif tool_name == "get_monthly_spending":
+
+            st.subheader("📅 Monthly Spending")
+
+            if result.get("status") != "success":
+                st.warning(
+                    result.get("message", "Unable to retrieve monthly spending.")
+                )
+
+            else:
+                st.caption(
+                    f"Account Reference: {result.get('account_ref')}"
+                )
+
+                monthly_spending = result.get("monthly_spending", [])
+
+                if monthly_spending:
+                    st.table(monthly_spending)
+
+                else:
+                    st.info("No monthly spending data found.")
+
+                st.caption(
+                    "Only successful debit transactions are included."
+                )
+
+        # 8. Other Tools
         else:
 
             st.json(result)
