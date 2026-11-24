@@ -5,38 +5,61 @@ from tools.complaint_tools import (
 )
 
 
-# Test 1: Attempt registration without confirmation
-print("\n--- Registration Without Confirmation ---\n")
+def test_invalid_category():
+    result = register_complaint.invoke({
+        "category": "Mobile Banking",
+        "description": "Unable to access mobile banking."
+    })
 
-result = register_complaint.invoke({
-    "category": "Digital Banking",
-    "description": "Unable to log in to the mobile application.",
-    "user_confirmation": False
-})
-
-print(result)
+    assert result["status"] == "invalid_input"
+    print("PASS: Invalid category")
 
 
-# Test 2: Register after confirmation
-print("\n--- Registration With Confirmation ---\n")
+def test_empty_description():
+    result = register_complaint.invoke({
+        "category": "Digital Banking",
+        "description": ""
+    })
 
-result = register_complaint.invoke({
-    "category": "Digital Banking",
-    "description": "Unable to log in to the mobile application.",
-    "user_confirmation": True
-})
-
-print(result)
-
-# Store generated complaint ID
-complaint_id = result["complaint_id"]
+    assert result["status"] == "invalid_input"
+    print("PASS: Empty description")
 
 
-# Test 3: Track the registered complaint
-print("\n--- Complaint Tracking ---\n")
+def test_whitespace_description():
+    result = register_complaint.invoke({
+        "category": "Digital Banking",
+        "description": "   "
+    })
 
-tracking_result = track_complaint.invoke({
-    "complaint_id": complaint_id
-})
+    assert result["status"] == "invalid_input"
+    print("PASS: Whitespace-only description")
 
-print(tracking_result)
+
+def test_empty_complaint_id():
+    result = track_complaint.invoke({
+        "complaint_id": ""
+    })
+
+    assert result["status"] == "invalid_input"
+    print("PASS: Empty complaint ID")
+
+
+def test_unknown_complaint_id():
+    result = track_complaint.invoke({
+        "complaint_id": "RB-UNKNOWN1"
+    })
+
+    assert result["status"] == "not_found"
+    print("PASS: Unknown complaint ID")
+
+
+if __name__ == "__main__":
+    print("\n========== COMPLAINT TOOL EDGE CASE TESTS ==========\n")
+
+    test_invalid_category()
+    test_empty_description()
+    test_whitespace_description()
+    test_empty_complaint_id()
+    test_unknown_complaint_id()
+
+    print("\n========== ALL TESTS PASSED ==========\n")

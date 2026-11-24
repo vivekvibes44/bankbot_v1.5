@@ -78,7 +78,9 @@ def track_complaint(complaint_id: str):
         Complaint details and current status.
     """
 
-    if not complaint_id.strip():
+    complaint_id = complaint_id.strip()
+
+    if not complaint_id:
         return {
             "status": "invalid_input",
             "message": "Complaint ID cannot be empty."
