@@ -15,6 +15,8 @@ from ui.common import (
     render_agent_activity,
 )
 
+from ui.dashboard import show_dashboard
+
 # 1. PAGE CONFIGURATION
 
 st.set_page_config(
@@ -35,10 +37,6 @@ if "navigation_radio" not in st.session_state:
 
 if "agent_activity" not in st.session_state:
     st.session_state.agent_activity = []
-
-
-def navigate_to(page):
-    st.session_state.navigation_radio = page
 
 
 # 3. SIDEBAR AND NAVIGATION
@@ -95,97 +93,7 @@ with st.sidebar:
 apply_theme(st.session_state.theme)
 
 
-# 4. DASHBOARD HOMEPAGE
-
-def show_dashboard():
-
-    st.title("Dashboard")
-
-    st.markdown(
-        """
-        <div class="welcome-card">
-            <h2>Welcome to Ready Bank!</h2>
-            <p>
-                Your intelligent banking assistant.
-                Explore banking information, calculate loan EMIs,
-                and manage your simulated banking activities.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.subheader("Overview")
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric("Demo Accounts", "Coming soon")
-    col2.metric("Transactions", "Coming soon")
-    col3.metric("Active Complaints", "Coming soon")
-
-    st.divider()
-
-    st.subheader("Ready Bank AI Assistant")
-
-    st.write(
-        "Ask banking questions, explore loan options, "
-        "or get help with your simulated banking activities."
-    )
-
-    st.button(
-        "💬 Open AI Assistant",
-        use_container_width=True,
-        on_click=navigate_to,
-        args=("AI Assistant",),
-    )
-
-    st.divider()
-
-    st.subheader("Quick Actions")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        st.button(
-            "🧮 EMI Calculator",
-            use_container_width=True,
-            on_click=navigate_to,
-            args=("Loans",),
-        )
-
-        st.button(
-            "📊 Spending Analysis",
-            use_container_width=True,
-            on_click=navigate_to,
-            args=("Transactions",),
-        )
-
-    with col2:
-
-        st.button(
-            "📋 Loan Eligibility",
-            use_container_width=True,
-            on_click=navigate_to,
-            args=("Loans",),
-        )
-
-        st.button(
-            "🎧 Register a Complaint",
-            use_container_width=True,
-            on_click=navigate_to,
-            args=("Support",),
-        )
-
-    st.divider()
-
-    st.caption(
-        "Demo environment: No real bank accounts, transactions "
-        "or financial operations are connected."
-    )
-
-
-# 5. PLACEHOLDER PAGES
+# 4. PLACEHOLDER PAGES
 
 def show_placeholder(title, description):
 
@@ -197,7 +105,7 @@ def show_placeholder(title, description):
     )
 
 
-# 6. AI ASSISTANT PAGE
+# 5. AI ASSISTANT PAGE
 
 def show_ai_assistant():
 
@@ -569,7 +477,7 @@ def show_ai_assistant():
                     )
 
 
-# 7. PAGE ROUTING
+# 6. PAGE ROUTING
 
 if selected_page == "Dashboard":
 
