@@ -3,11 +3,12 @@ import streamlit as st
 from ui.common import apply_theme
 from ui.dashboard import show_dashboard
 from ui.assistant import show_ai_assistant
-from ui.activity import show_activity
-from ui.settings import show_settings
 from ui.loans import show_loans
 from ui.transactions import show_transactions
 from ui.support import show_support
+from ui.activity import show_activity
+from ui.settings import show_settings
+
 
 # 1. PAGE CONFIGURATION
 
@@ -81,20 +82,10 @@ with st.sidebar:
         "or financial operations are connected."
     )
 
-# Apply selected theme
+
+# 4. APPLY THEME
+
 apply_theme(st.session_state.theme)
-
-
-# 4. PLACEHOLDER PAGES
-
-def show_placeholder(title, description):
-
-    st.title(title)
-    st.info(description)
-
-    st.caption(
-        "This section will be implemented in a later milestone."
-    )
 
 
 # 5. PAGE ROUTING
@@ -108,12 +99,15 @@ elif selected_page == "AI Assistant":
     show_ai_assistant()
 
 elif selected_page == "Loans":
+
     show_loans()
 
 elif selected_page == "Transactions":
+
     show_transactions()
 
 elif selected_page == "Support":
+
     show_support()
 
 elif selected_page == "Activity":
