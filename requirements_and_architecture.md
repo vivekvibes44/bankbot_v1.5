@@ -3,64 +3,74 @@
 **Project Name:** BankBot v1.5  
 **Project Title:** Agentic AI Banking Assistant  
 **Version:** 1.0  
-**Status:** Proposed — Pre-development  
-**Banking Identity:** Ready Bank (fictional)  
+**Status:** Implemented — Final Integration and Documentation  
+**Banking Identity:** Ready Bank (Fictional)  
 **Primary Objective:** Portfolio-oriented Agentic AI application
 
 ---
 
 ## 1. Project Overview
 
-BankBot v1.5 is an Agentic AI-powered banking assistant designed to provide banking information, perform calculations, analyze simulated financial data, and execute multi-step customer-support workflows.
+BankBot v1.5 is an Agentic AI-powered banking assistant developed to provide banking information, perform financial calculations, analyze simulated transaction data, and support customer-service workflows.
 
-Unlike the original BankBot v1, which primarily focuses on document-based question answering through Retrieval-Augmented Generation (RAG), v1.5 introduces an intelligent agent capable of selecting and executing tools based on user requirements.
+Unlike the original BankBot v1, which primarily focused on document-based question answering through Retrieval-Augmented Generation (RAG), v1.5 introduces a tool-using AI agent capable of interpreting user requests, selecting appropriate tools, and executing tasks through LangGraph.
 
-The application will feature an improved, interactive Streamlit interface designed to resemble a modern fintech banking application.
+The application combines a modular Streamlit interface, a Groq-hosted language model, OpenRouter embeddings, FAISS-based document retrieval, and an SQLite database.
 
-The project will use Ready Bank, a fictional banking institution, with synthetic banking policies and simulated customer data.
+The system supports banking knowledge retrieval, loan assistance, EMI calculations, eligibility estimation, simulated complaint management, and transaction analysis.
 
-**Important:** Ready Bank is fictional. This application is an educational and portfolio project, not an operational banking system.
+The application uses Ready Bank, a fictional banking institution, with synthetic banking policies and simulated customer data.
+
+**Important:** Ready Bank is fictional. BankBot v1.5 is an educational and portfolio project, not an operational banking system.
 
 ## 2. Project Objectives
 
 1. Upgrade a conventional RAG chatbot into a tool-using Agentic AI assistant.
-2. Introduce intelligent task routing and multi-step workflow execution.
-3. Improve the user experience through a modern, interactive banking dashboard.
-4. Integrate deterministic Python tools for banking calculations and operations.
-5. Support conversational context across multiple interactions.
+2. Implement intelligent task routing and tool execution using LangGraph.
+3. Provide a modern, interactive banking interface using Streamlit.
+4. Integrate deterministic Python tools for banking calculations and simulated banking operations.
+5. Support conversational context through LangGraph thread-based state management.
 6. Implement validation, error handling, and human approval for consequential simulated actions.
-7. Demonstrate practical applications of RAG, LLM tool calling, and agent orchestration.
+7. Integrate document retrieval into the agent as a banking knowledge tool.
+8. Demonstrate practical applications of RAG, LLM tool calling, agent orchestration, and human-in-the-loop workflows.
 
 ## 3. Project Scope
 
-### 3.1 In Scope
+### 3.1 Implemented Scope
 
 - Ready Bank banking knowledge assistant.
 - RAG-based document retrieval.
-- Single-agent orchestration.
-- Tool calling and execution.
-- Loan assistance and eligibility estimation.
-- EMI and interest calculations.
-- Banking product comparisons.
-- Personalized document checklists.
+- Single-agent orchestration using LangGraph.
+- LLM-based tool selection and execution.
+- Loan EMI and interest calculations.
+- Preliminary loan eligibility assessment.
+- Loan product comparison.
 - Simulated complaint registration and tracking.
-- Simulated transaction analysis.
-- Multi-step workflow execution.
-- Conversation and workflow history.
-- Modern Streamlit dashboard.
-- Source citations and response grounding.
-- Agent execution logging and evaluation.
+- Human approval and rejection of complaint registration requests.
+- Synthetic customer and account records.
+- Simulated transaction history.
+- Spending summaries and category-wise analysis.
+- Monthly spending analysis.
+- Conversation state management.
+- Agent activity and tool execution history.
+- Structured result presentation.
+- RAG source information in assistant responses.
+- Modular Streamlit dashboard with seven navigation pages.
+- SQLite-based data persistence.
 
 ### 3.2 Out of Scope
 
 - Real banking integrations.
 - Actual financial transactions.
-- Real loan approval or credit decisions.
+- Official loan approval or credit decisions.
 - Real customer authentication.
 - Access to real customer account information.
-- Autonomous submission of real banking applications.
-- Direct modification of actual bank records.
-- Multiple autonomous agents in the initial release.
+- Submission of real banking applications.
+- Modification of actual bank records.
+- Multiple autonomous agents.
+- Live banking web search.
+- Advanced hybrid retrieval using BM25.
+- Automated anomaly or fraud detection.
 
 ## 4. Functional Requirements
 
@@ -68,351 +78,401 @@ The project will use Ready Bank, a fictional banking institution, with synthetic
 
 The system shall:
 
-- Answer questions using the Ready Bank knowledge base.
-- Retrieve relevant information from structured and unstructured documents.
-- Support semantic retrieval and metadata filtering.
-- Present supporting source information.
-- Maintain conversational context.
-- Handle unsupported questions using a defined fallback.
-- Avoid generating unsupported banking policies or figures.
+- Answer banking questions using the Ready Bank knowledge base.
+- Retrieve relevant information from supported knowledge documents.
+- Use semantic similarity search through FAISS.
+- Generate embeddings using an OpenRouter-hosted embedding model.
+- Present relevant source information in the assistant interface.
+- Maintain conversational context through the agent's thread state.
+- Route calculation and operational questions to appropriate tools when required.
+- Provide fallback responses when the knowledge base cannot support an answer.
 
 ### FR-02: Agent Orchestration
 
 The system shall:
 
-- Understand natural-language requests.
-- Identify the required task or capability.
-- Select appropriate tools.
-- Execute multiple tools when necessary.
-- Handle missing information by asking follow-up questions.
-- Validate tool outputs.
-- Maintain task state.
-- Return a consolidated response.
+- Interpret natural-language user requests.
+- Identify the required banking capability.
+- Select appropriate tools through LLM tool calling.
+- Execute selected tools through LangGraph.
+- Support requests requiring multiple tool interactions.
+- Ask follow-up questions when required information is missing.
+- Process tool outputs and generate consolidated responses.
+- Maintain conversation state using thread identifiers.
+- Pause workflows when human approval is required.
+
+The initial implementation uses a single intelligent agent with multiple specialized tools rather than multiple autonomous agents.
 
 ### FR-03: Loan Assistance
 
 The system shall:
 
-- Retrieve loan product information.
-- Collect relevant applicant details.
-- Perform preliminary eligibility checks.
+- Provide information about available loan products.
+- Perform preliminary loan eligibility assessments.
 - Calculate estimated EMIs.
-- Compare available loan products.
-- Generate document checklists.
-- Explain results and their supporting policies.
+- Calculate total interest and repayment amounts.
+- Compare available loan products based on their interest rates.
+- Explain calculation results.
 
-All eligibility assessments shall be estimates, not official approvals.
+Eligibility assessments are estimates based on configured criteria and do not represent official loan approvals.
 
 ### FR-04: Banking Calculation Tools
 
-The system shall provide deterministic tools for:
+The system shall provide deterministic Python tools for:
 
 - EMI calculation.
-- Interest calculation.
-- Loan eligibility assessment.
-- Banking fee calculation.
+- Total interest calculation.
+- Total repayment calculation.
+- Preliminary loan eligibility assessment.
 - Loan product comparison.
 
-The LLM shall select tools where appropriate, while Python performs the actual calculations.
+The LLM selects the appropriate tool, while Python performs the actual calculations.
 
 ### FR-05: Complaint Management
 
 The system shall:
 
-- Understand and categorize complaints.
-- Request missing information.
-- Retrieve relevant troubleshooting guidance.
-- Create simulated complaint tickets.
-- Generate ticket references.
-- Retrieve ticket status.
+- Accept simulated customer complaints.
+- Validate complaint categories and descriptions.
+- Generate complaint reference numbers.
+- Store complaints in SQLite.
+- Request explicit user approval before registration.
+- Allow users to approve or reject pending registrations.
+- Retrieve complaint details and current status.
+
+Complaint registration uses LangGraph's human-in-the-loop interrupt and resume workflow.
 
 ### FR-06: Transaction Analysis
 
 The system shall:
 
-- Access synthetic transaction records.
-- Categorize expenses.
+- Access synthetic customer, account, and transaction records.
+- Retrieve account transaction history.
 - Calculate spending summaries.
-- Compare spending across periods.
-- Identify recurring transactions.
-- Flag unusual transaction patterns.
-- Generate visual summaries.
+- Generate category-wise spending summaries.
+- Generate monthly spending summaries.
+- Validate account references and transaction filters.
+- Count only successful debit transactions when calculating spending.
 
-### FR-07: Multi-step Workflow Execution
+The current implementation does not include automated fraud detection, recurring transaction detection, or unusual transaction identification.
+
+### FR-07: Workflow Execution and Approval
 
 The system shall:
 
-- Convert user goals into executable steps.
-- Execute tasks in a controlled sequence.
-- Track workflow progress.
-- Handle incomplete or failed steps.
-- Request approval before consequential simulated actions.
-- Save workflow results.
+- Execute tool-based tasks through LangGraph.
+- Maintain workflow state during agent execution.
+- Record actual tool calls and their results.
+- Pause complaint registration when approval is required.
+- Resume the workflow following user approval or rejection.
+- Present execution status through the Streamlit interface.
 
 ### FR-08: Conversation Management
 
 The system shall:
 
-- Maintain conversation history.
-- Resolve follow-up questions using relevant context.
-- Preserve important workflow information.
-- Support multiple conversations.
-- Avoid unnecessary repetition of previously collected information.
+- Maintain conversation state using LangGraph thread identifiers.
+- Support follow-up questions within a conversation.
+- Preserve relevant messages during agent interactions.
+- Support separate conversation threads for different application workflows.
+- Display agent execution history through the Activity page.
+
+Conversation persistence is managed through the configured LangGraph checkpointer.
 
 ## 5. User Interface Requirements
 
-The application shall use Streamlit with a modern fintech-inspired design.
+The application uses Streamlit with a modular, banking-inspired interface.
 
 ### Main Navigation
 
 1. Dashboard
 2. AI Assistant
 3. Loans
-4. Accounts and Banking Information
-5. Transactions
-6. Customer Support
-7. Conversation and Workflow History
+4. Transactions
+5. Support
+6. Activity
+7. Settings
 
 ### Dashboard
 
-- Personalized welcome section.
-- Quick-action cards.
-- Available banking services.
-- Recent workflow activity.
-- Navigation to major features.
+- Welcome section.
+- Demo account count.
+- Transaction count.
+- Active complaint count.
+- Navigation shortcuts.
+- Quick access to major banking features.
 
 ### AI Assistant
 
 - Interactive chat interface.
-- Conversation history.
-- Quick prompts.
-- Rich response cards.
-- Expandable source citations.
-- Agent activity panel.
-- Workflow progress indicators.
+- Suggested questions.
+- Conversation management.
+- Structured result presentation.
+- Expandable RAG source information.
+- Agent activity display.
+- Complaint approval and rejection interface.
 
-### Loan Section
+### Loans
 
+- EMI calculator.
 - Loan product comparison.
-- Interactive EMI calculator.
 - Preliminary eligibility assessment.
-- Document checklist.
+- Structured calculation results.
 
-### Transaction Section
+### Transactions
 
+- Transaction history.
 - Spending summaries.
-- Category-wise charts.
-- Transaction tables.
-- Period comparisons.
+- Category-wise spending analysis.
+- Monthly spending analysis.
 
-### Customer Support Section
+### Support
 
-- Complaint creation.
-- Ticket tracking.
-- Troubleshooting guidance.
+- Simulated complaint registration.
+- Human approval and rejection.
+- Complaint tracking.
+- Complaint status display.
+
+### Activity
+
+- Actual agent tool execution history.
+- Tool names and execution status.
+- Tool input arguments.
+- Tool results.
+
+### Settings
+
+- Current application theme information.
+- Light and Dark theme support through the main application interface.
 
 ## 6. Non-functional Requirements
 
-- Maintain modular and maintainable code.
-- Keep frontend and backend responsibilities separate.
+- Maintain modular and maintainable Python code.
+- Keep presentation, agent, tool, database, and retrieval responsibilities separate.
 - Prefer free or low-cost hosted model services.
-- Secure API keys using environment variables.
+- Store API credentials in environment variables.
 - Validate user inputs and tool arguments.
-- Handle API failures and rate limits gracefully.
+- Handle database and model-service errors.
 - Use synthetic customer and transaction data.
-- Maintain logs for agent execution and tool calls.
-- Support evaluation of retrieval and agent performance.
-- Prevent unauthorized or unintended simulated actions.
+- Record agent tool execution activity for transparency.
+- Preserve human approval for complaint registration.
+- Avoid exposing API credentials in application output.
+- Clearly distinguish simulated banking results from real financial decisions.
 
-## 7. Proposed Technology Stack
+## 7. Implemented Technology Stack
 
 | Component | Technology |
 |---|---|
 | Programming language | Python |
 | Frontend | Streamlit |
-| LLM | Groq-hosted model |
+| LLM provider | Groq |
 | Agent orchestration | LangGraph |
 | LLM integration | LangChain |
-| Embeddings | OpenRouter |
+| Embedding provider | OpenRouter |
+| Embedding integration | LangChain OpenAI integration |
 | Vector search | FAISS |
-| Keyword search | Optional BM25 |
+| Document processing | PyPDF |
+| Text splitting | LangChain Text Splitters |
 | Database | SQLite |
-| Data validation | Pydantic |
-| Data processing | Pandas |
-| Visualization | Plotly |
-| Web search | Tavily, optional fallback |
+| Environment configuration | Python dotenv |
 
-Technology choices may be revised after testing compatibility, performance, and API availability.
+The application uses hosted language-model and embedding services to avoid the resource requirements of running large models locally.
 
 ## 8. High-Level Architecture
 
-The application will follow a modular architecture consisting of:
+The application follows a modular architecture consisting of the following layers:
 
-1. Presentation Layer — Streamlit interface.
-2. Agent Layer — LangGraph orchestration and state management.
-3. Tool Layer — Banking calculations, retrieval, database operations, and workflow actions.
-4. Knowledge Layer — Document ingestion, embeddings, vector retrieval, and citations.
-5. Data Layer — SQLite and synthetic banking datasets.
-6. Validation Layer — Input validation, output verification, approval controls, and logging.
+1. **Presentation Layer:** Streamlit pages and shared UI components.
+2. **Agent Layer:** LangGraph orchestration, tool selection, execution, and conversation state.
+3. **Tool Layer:** Banking calculations, loan operations, complaint management, transaction analysis, and knowledge retrieval.
+4. **Knowledge Layer:** Document loading, chunking, embeddings, FAISS indexing, and retrieval.
+5. **Data Layer:** SQLite database, synthetic banking records, and local vector storage.
+6. **Configuration Layer:** Environment-based API and model configuration.
 
 ### Agent Execution Flow
 
-User Request → Intent Understanding → Tool Selection → Tool Execution → Result Validation → Approval if Required → Response Generation → Workflow State Update.
+User Request → LangGraph Agent → LLM Tool Selection → Tool Execution → Result Processing → Human Approval if Required → Response Generation → Streamlit Presentation.
 
-The initial architecture will use one intelligent agent with multiple specialized tools, rather than multiple autonomous agents.
+### RAG Execution Flow
 
-## 9. Proposed Project Structure
+Knowledge Documents → Document Loading → Text Splitting → Embedding Generation → FAISS Vector Index → Similarity Retrieval → Knowledge Tool → Agent Response.
 
-BankBot_v1_5/
+### Complaint Approval Flow
 
-- app.py
-- config.py
-- requirements.txt
-- .env
+Complaint Request → Validation → Approval Interrupt → User Decision → Workflow Resume → Complaint Registration or Cancellation → Result Presentation.
 
-agents/
-- graph.py
-- state.py
-- nodes.py
-- routing.py
+The approval process prevents complaint registration from proceeding without explicit user confirmation.
 
-tools/
-- knowledge_tool.py
-- loan_tools.py
-- calculation_tools.py
-- complaint_tools.py
-- transaction_tools.py
+## 9. Project Structure
 
-rag/
-- ingest.py
-- loaders.py
-- chunking.py
-- embeddings.py
-- retrieval.py
-- citations.py
+The project is organized into modular directories to separate application responsibilities.
 
-database/
-- db.py
-- models.py
-- synthetic_data.py
+```text
+Bankbot_v1_5/
+│
+├── app.py
+├── config.py
+├── requirements.txt
+├── .env
+│
+├── agents/
+│   └── graph.py
+│
+├── database/
+│   ├── db.py
+│   ├── complaint_repository.py
+│   └── transaction_repository.py
+│
+├── tools/
+│   ├── complaint_tools.py
+│   ├── loan_tools.py
+│   ├── transaction_tools.py
+│   └── knowledge_tool.py
+│
+├── rag/
+│   └── ...
+│
+├── ui/
+│   ├── common.py
+│   ├── dashboard.py
+│   ├── assistant.py
+│   ├── loans.py
+│   ├── transactions.py
+│   ├── support.py
+│   ├── activity.py
+│   └── settings.py
+│
+├── tests/
+│   └── ...
+│
+├── knowledge/
+│   └── ...
+│
+└── vector_store/
+    └── faiss_index/
+```
 
-ui/
-- dashboard.py
-- assistant.py
-- loans.py
-- transactions.py
-- support.py
+The tree above illustrates the main architectural organization. Additional implementation files, data files, and test modules may exist within the directories.
 
-evaluation/
-- retrieval_tests.py
-- agent_tests.py
-- workflow_tests.py
-
-utils/
-- validators.py
-- logging_config.py
-
-knowledge/
-- accounts/
-- loans/
-- fees/
-- digital_banking/
-- eligibility/
-- faq/
-
-vector_store/
-- faiss_index/
-
-## 10. Development Roadmap
+## 10. Development Roadmap and Implementation Status
 
 **Phase 1 — Requirements and Architecture**
-- Finalize requirements.
-- Finalize architecture.
-- Define user workflows.
-- Establish project structure.
+- Requirements and architecture defined.
+- Project scope and technology stack established.
+
+**Status:** Completed.
 
 **Phase 2 — Project Setup and UI Foundation**
-- Create an independent project environment.
-- Configure dependencies.
-- Build the Streamlit dashboard.
-- Implement navigation and page layouts.
+- Independent project environment created.
+- Dependencies configured.
+- Streamlit dashboard implemented.
+- Navigation and theme switching implemented.
+- Seven modular application pages completed.
+
+**Status:** Completed.
 
 **Phase 3 — Knowledge and RAG Layer**
-- Prepare Ready Bank knowledge documents.
-- Implement ingestion and metadata handling.
-- Configure embeddings and FAISS.
-- Implement retrieval and citations.
+- Ready Bank knowledge documents prepared.
+- Document loading and text splitting implemented.
+- OpenRouter embeddings integrated.
+- FAISS vector index created.
+- Semantic retrieval integrated.
+- Knowledge retrieval exposed through an agent tool.
+
+**Status:** Completed.
 
 **Phase 4 — Agent Foundation**
-- Introduce LangGraph.
-- Define agent state.
-- Integrate the RAG pipeline as a tool.
-- Implement tool selection and execution.
+- LangGraph agent implemented.
+- LLM tool selection configured.
+- Tool execution integrated.
+- Conversation state and thread management implemented.
+- RAG tool integrated with the agent.
+
+**Status:** Completed.
 
 **Phase 5 — Banking Tools**
-- Implement EMI and interest calculations.
-- Implement loan eligibility checks.
-- Implement loan comparison.
-- Generate document checklists.
+- EMI calculation implemented.
+- Loan eligibility assessment implemented.
+- Loan comparison implemented.
+- Structured calculation results integrated.
+
+**Status:** Completed for the implemented loan capabilities.
 
 **Phase 6 — Banking Workflows**
-- Implement complaint management.
-- Add simulated transaction analysis.
-- Add multi-step task execution.
-- Implement workflow history and approval controls.
+- Complaint registration and tracking implemented.
+- Human approval and rejection integrated.
+- SQLite customer, account, and transaction data implemented.
+- Transaction history and spending analysis implemented.
+- Agent activity tracking integrated.
+
+**Status:** Completed for the implemented workflows.
 
 **Phase 7 — Evaluation and Reliability**
-- Evaluate retrieval quality.
-- Test tool selection.
-- Validate calculation accuracy.
-- Test multi-step workflows.
-- Test failure handling and grounding.
+- Individual banking tools tested.
+- Database operations validated.
+- Transaction analysis tested.
+- RAG retrieval and agent integration tested.
+- Complaint approval workflow tested.
+- UI integration verified.
+
+**Status:** Core implementation and integration testing completed.
 
 **Phase 8 — Portfolio Release**
-- Refine the UI.
-- Prepare demo scenarios.
-- Document architecture and implementation.
-- Prepare GitHub README and project presentation.
+- Application integration completed.
+- Dashboard metrics integrated.
+- README and architecture documentation prepared.
+- Final project review and repository preparation.
+
+**Status:** Documentation and final release preparation.
 
 ## 11. Evaluation Strategy
 
-The project shall be evaluated across:
+The implementation has been evaluated across the following areas:
 
-- Retrieval precision and recall.
-- Answer faithfulness and relevance.
-- Citation correctness.
-- Tool-selection accuracy.
-- Calculation correctness.
-- Workflow completion rate.
-- Error handling and reliability.
-- Execution latency and API cost.
+- RAG retrieval and relevance.
+- Knowledge-grounded agent responses.
+- Tool selection and execution.
+- EMI calculation correctness.
+- Loan eligibility validation.
+- Loan comparison results.
+- Database operations.
+- Transaction spending calculations.
+- Complaint approval and cancellation.
+- Structured result presentation.
+- Agent activity visibility.
+- Streamlit navigation and theme behavior.
 
-Performance targets shall be defined after baseline testing.
+Evaluation is based on functional tests and integration checks. Formal benchmark targets for retrieval precision, recall, latency, and cost have not been established.
 
 ## 12. Safety and Data Boundaries
 
-- All banking policies shall belong to the fictional Ready Bank.
-- All customer and transaction data shall be synthetic.
-- No real financial transactions shall be executed.
-- No real loan applications shall be submitted.
-- Consequential simulated actions shall require user confirmation.
-- Sensitive information shall not be exposed in logs or responses.
-- Banking recommendations shall clearly distinguish estimates from official decisions.
+- Ready Bank is a fictional institution.
+- All customer, account, and transaction records are synthetic.
+- No real financial transactions are executed.
+- No real loan applications are submitted.
+- Loan eligibility results are estimates, not official decisions.
+- Complaint registration requires explicit user approval.
+- API credentials are loaded through environment variables.
+- The application does not provide access to real bank accounts.
+- Database operations are limited to the simulated application environment.
 
 ## 13. Definition of Project Success
 
-BankBot v1.5 shall be considered successful when a user can:
+BankBot v1.5 demonstrates a functional Agentic AI banking assistant when a user can:
 
-1. Ask banking questions and receive source-grounded answers.
-2. Request a loan assessment and receive calculated estimates.
-3. Compare loan products and obtain document checklists.
-4. Register and track simulated complaints.
-5. Analyze synthetic transaction records.
-6. Complete multi-step tasks through the agent.
-7. Observe the agent's activity through the interface.
-8. Review previous conversations and workflow results.
+1. Ask banking questions and receive knowledge-based responses.
+2. Request loan calculations and receive deterministic estimates.
+3. Check preliminary loan eligibility.
+4. Compare available loan products.
+5. Register simulated complaints with explicit approval.
+6. Track complaint status.
+7. Review synthetic transaction records.
+8. Analyze spending through summaries and category-wise and monthly breakdowns.
+9. Interact with the agent across conversation turns.
+10. Observe actual tool execution through the Activity interface.
+11. Navigate a modular banking dashboard with Light and Dark themes.
 
-The final deliverable shall demonstrate a functional, visually polished Agentic AI banking application rather than a conventional document-question-answering chatbot.
+The final deliverable demonstrates a working Agentic AI application combining RAG, LangGraph tool orchestration, deterministic banking tools, SQLite persistence, and human-in-the-loop approval rather than a conventional document-question-answering chatbot.
 
 ---
 
