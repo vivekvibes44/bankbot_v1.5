@@ -7,6 +7,7 @@ from ui.activity import show_activity
 from ui.settings import show_settings
 from ui.loans import show_loans
 from ui.transactions import show_transactions
+from ui.support import show_support
 
 # 1. PAGE CONFIGURATION
 
@@ -113,11 +114,7 @@ elif selected_page == "Transactions":
     show_transactions()
 
 elif selected_page == "Support":
-
-    show_placeholder(
-        "Customer Support",
-        "Register and track simulated banking complaints.",
-    )
+    show_support()
 
 elif selected_page == "Activity":
 
