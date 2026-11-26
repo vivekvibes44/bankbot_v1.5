@@ -10,8 +10,15 @@ from rag.embeddings import get_embeddings
 BASE_DIR = Path(__file__).resolve().parent.parent
 VECTOR_STORE_DIR = BASE_DIR / "vector_store" / "faiss_index"
 
+VECTOR_STORE_8B_DIR = (
+    BASE_DIR / "vector_store" / "faiss_index_8b"
+)
 
-def create_vector_store(chunks):
+def create_vector_store(
+    chunks,
+    vector_store_dir=VECTOR_STORE_DIR,
+    embedding_model=None
+):
     """
     Generate embeddings individually, create a FAISS index,
     and save it locally.
@@ -23,7 +30,7 @@ def create_vector_store(chunks):
     if not chunks:
         raise ValueError("No document chunks were supplied.")
 
-    embeddings = get_embeddings()
+    embeddings = get_embeddings(embedding_model)
     text_embeddings = []
 
     total_chunks = len(chunks)
@@ -67,31 +74,37 @@ def create_vector_store(chunks):
         metadatas=[chunk.metadata for chunk in chunks]
     )
 
-    VECTOR_STORE_DIR.mkdir(parents=True, exist_ok=True)
+    vector_store_dir = Path(vector_store_dir)
+    vector_store_dir.mkdir(parents=True, exist_ok=True)
 
-    vector_store.save_local(str(VECTOR_STORE_DIR))
+    vector_store.save_local(str(vector_store_dir))
 
     print("\nFAISS index saved successfully!")
-    print(f"Location: {VECTOR_STORE_DIR}")
+    print(f"Location: {vector_store_dir}")
 
     return vector_store
 
 
-def load_vector_store():
-    """Load an existing FAISS index without generating embeddings."""
+def load_vector_store(
+    vector_store_dir=VECTOR_STORE_DIR,
+    embedding_model=None
+):
+    """Load an existing FAISS index."""
 
-    index_file = VECTOR_STORE_DIR / "index.faiss"
-    metadata_file = VECTOR_STORE_DIR / "index.pkl"
+    vector_store_dir = Path(vector_store_dir)
+
+    index_file = vector_store_dir / "index.faiss"
+    metadata_file = vector_store_dir / "index.pkl"
 
     if not index_file.exists() or not metadata_file.exists():
         raise FileNotFoundError(
-            "FAISS index not found. Please run ingestion first."
+            f"FAISS index not found at {vector_store_dir}."
         )
 
-    embeddings = get_embeddings()
+    embeddings = get_embeddings(embedding_model)
 
     vector_store = FAISS.load_local(
-        str(VECTOR_STORE_DIR),
+        str(vector_store_dir),
         embeddings,
         allow_dangerous_deserialization=True
     )

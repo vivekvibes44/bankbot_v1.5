@@ -3,7 +3,10 @@ from rag.text_splitter import split_documents
 from rag.vector_store import create_vector_store
 
 
-def ingest_knowledge_base():
+def ingest_knowledge_base(
+    vector_store_dir=None,
+    embedding_model=None
+):
     """Load, split, embed and index the knowledge base."""
 
     print("\n========== READY BANK RAG INGESTION ==========\n")
@@ -24,7 +27,15 @@ def ingest_knowledge_base():
 
     # 3. Generate embeddings and create FAISS index
     print("\nStep 3: Creating vector store...")
-    vector_store = create_vector_store(chunks)
+
+    if vector_store_dir is None:
+        vector_store = create_vector_store(chunks)
+    else:
+        vector_store = create_vector_store(
+            chunks,
+            vector_store_dir=vector_store_dir,
+            embedding_model=embedding_model
+        )
 
     print("\n========== INGESTION COMPLETED ==========")
 
