@@ -6,6 +6,7 @@ from ui.assistant import show_ai_assistant
 from ui.activity import show_activity
 from ui.settings import show_settings
 from ui.loans import show_loans
+from ui.transactions import show_transactions
 
 # 1. PAGE CONFIGURATION
 
@@ -109,11 +110,7 @@ elif selected_page == "Loans":
     show_loans()
 
 elif selected_page == "Transactions":
-
-    show_placeholder(
-        "Transaction Analysis",
-        "View synthetic transactions and spending insights.",
-    )
+    show_transactions()
 
 elif selected_page == "Support":
 
