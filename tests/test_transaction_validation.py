@@ -5,56 +5,73 @@ from tools.transaction_tools import (
 )
 
 
+ACCOUNT_REF = "RB-ACC-1002"
+
+
 def run_test(name, result):
 
     print("\n" + "=" * 65)
     print(name)
     print("=" * 65)
+
     print(result)
 
+    assert result["status"] == "invalid_input", (
+        f"{name} failed: expected invalid_input, got {result}"
+    )
 
-# Test 1: Invalid calendar date
-run_test(
-    "Invalid date format",
-    get_spending_summary.invoke({
-        "account_ref": "RB-ACC-1002",
+    print("PASSED")
+
+
+def test_invalid_calendar_date():
+
+    result = get_spending_summary.invoke({
+        "account_ref": ACCOUNT_REF,
         "start_date": "2026-15-40",
         "end_date": "2026-11-30"
     })
-)
+
+    run_test("Invalid calendar date", result)
 
 
-# Test 2: Start date later than end date
-run_test(
-    "Reversed date range",
-    get_spending_summary.invoke({
-        "account_ref": "RB-ACC-1002",
+def test_reversed_date_range():
+
+    result = get_spending_summary.invoke({
+        "account_ref": ACCOUNT_REF,
         "start_date": "2026-11-30",
         "end_date": "2026-09-01"
     })
-)
+
+    run_test("Reversed date range", result)
 
 
-# Test 3: Invalid date in transaction retrieval
-run_test(
-    "Invalid date in transaction retrieval",
-    get_account_transactions.invoke({
-        "account_ref": "RB-ACC-1002",
+def test_invalid_transaction_date():
+
+    result = get_account_transactions.invoke({
+        "account_ref": ACCOUNT_REF,
         "start_date": "2026-09-40",
         "end_date": "2026-11-30"
     })
-)
+
+    run_test("Invalid date in transaction retrieval", result)
 
 
-# Test 4: Reversed date range in transaction retrieval
-run_test(
-    "Reversed transaction date range",
-    get_account_transactions.invoke({
-        "account_ref": "RB-ACC-1002",
+def test_reversed_transaction_date_range():
+
+    result = get_account_transactions.invoke({
+        "account_ref": ACCOUNT_REF,
         "start_date": "2026-11-30",
         "end_date": "2026-09-01"
     })
-)
+
+    run_test("Reversed transaction date range", result)
 
 
-print("\nAll direct validation tests executed.")
+if __name__ == "__main__":
+
+    test_invalid_calendar_date()
+    test_reversed_date_range()
+    test_invalid_transaction_date()
+    test_reversed_transaction_date_range()
+
+    print("\nAll transaction validation tests passed.")
