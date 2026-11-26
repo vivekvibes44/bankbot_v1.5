@@ -186,6 +186,9 @@ def extract_structured_results(messages):
         if not tool_name:
             continue
 
+        if tool_name == "search_banking_knowledge":
+            continue
+
         tool_result = getattr(message, "content", None)
 
         # Parse JSON results where possible.
@@ -201,6 +204,80 @@ def extract_structured_results(messages):
         })
 
     return structured_results
+
+
+def extract_rag_sources(messages):
+    """
+    Extract RAG sources generated during the latest user turn only.
+    """
+
+    messages = messages or []
+
+    # Find the latest user message.
+    last_human_index = None
+
+    for index, message in enumerate(messages):
+        if getattr(message, "type", None) == "human":
+            last_human_index = index
+
+    if last_human_index is not None:
+        messages = messages[last_human_index:]
+
+    # Map tool call IDs to tool names.
+    tool_names = {}
+
+    for message in messages:
+        for tool_call in getattr(message, "tool_calls", []) or []:
+            tool_names[tool_call.get("id")] = tool_call.get("name")
+
+    sources = []
+    seen_sources = set()
+
+    # Extract results from the RAG tool only.
+    for message in messages:
+
+        tool_call_id = getattr(message, "tool_call_id", None)
+
+        if not tool_call_id:
+            continue
+
+        if tool_names.get(tool_call_id) != "search_banking_knowledge":
+            continue
+
+        tool_result = getattr(message, "content", None)
+
+        # Parse JSON-formatted tool results.
+        if isinstance(tool_result, str):
+            try:
+                tool_result = json.loads(tool_result)
+            except (json.JSONDecodeError, TypeError):
+                continue
+
+        if not isinstance(tool_result, dict):
+            continue
+
+        for source in tool_result.get("sources", []):
+
+            if not isinstance(source, dict):
+                continue
+
+            source_name = source.get("source", "Unknown source")
+            category = source.get("category", "Unknown category")
+
+            # Avoid displaying duplicate source entries.
+            source_key = (source_name, category)
+
+            if source_key in seen_sources:
+                continue
+
+            seen_sources.add(source_key)
+
+            sources.append({
+                "source": source_name,
+                "category": category
+            })
+
+    return sources
 
 
 def render_structured_result(structured_results):
@@ -917,15 +994,18 @@ def show_ai_assistant():
                     result["messages"][-1].content
                 )
 
-                st.session_state.chat_history.append(
-                    {
-                        "role": "assistant",
-                        "content": assistant_response,
-                        "structured_results": extract_structured_results(
-                            result.get("messages", [])
-                        ),
-                    }
-                )
+                st.session_state.chat_history.append({
+                    "role": "assistant",
+                    "content": assistant_response,
+
+                    "structured_results": extract_structured_results(
+                        result.get("messages", [])
+                    ),
+
+                    "sources": extract_rag_sources(
+                        result.get("messages", [])
+                    ),
+                })
 
             # Refresh the page to display updated Agent Activity.
             st.rerun()
@@ -947,10 +1027,25 @@ def show_ai_assistant():
 
                 # Sources section
                 with st.expander("📚 Sources"):
+                    sources = message.get("sources", [])
+                    if sources:
+                        st.caption(
+                            "Retrieved documents from the Ready Bank knowledge base."
+                        )
 
-                    st.caption(
-                        "Source citations will appear here when RAG is integrated."
-                    )
+                        for source in sources:
+                            st.markdown(
+                                f"**{source.get('source', 'Unknown source')}**"
+                            )
+                            st.caption(
+                                f"Category: {source.get('category', 'Unknown category')}"
+                            )
+
+                    else:
+                        st.caption(
+                            "No knowledge-base sources were retrieved for this response."
+                        )
+
 
                 # Structured Result
 
