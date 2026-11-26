@@ -5,6 +5,7 @@ from ui.dashboard import show_dashboard
 from ui.assistant import show_ai_assistant
 from ui.activity import show_activity
 from ui.settings import show_settings
+from ui.loans import show_loans
 
 # 1. PAGE CONFIGURATION
 
@@ -105,11 +106,7 @@ elif selected_page == "AI Assistant":
     show_ai_assistant()
 
 elif selected_page == "Loans":
-
-    show_placeholder(
-        "Loan Services",
-        "Explore loan eligibility, EMI calculations and loan comparisons.",
-    )
+    show_loans()
 
 elif selected_page == "Transactions":
 
