@@ -1,22 +1,10 @@
 import streamlit as st
-import uuid
 
-from langchain_core.messages import HumanMessage
-from langgraph.types import Command
-
-from agents.graph import agent
-
-from ui.common import (
-    apply_theme,
-    update_agent_activity,
-    extract_structured_results,
-    extract_rag_sources,
-    render_structured_result,
-    render_agent_activity,
-)
-
+from ui.common import apply_theme
 from ui.dashboard import show_dashboard
 from ui.assistant import show_ai_assistant
+from ui.activity import show_activity
+from ui.settings import show_settings
 
 # 1. PAGE CONFIGURATION
 
@@ -139,27 +127,8 @@ elif selected_page == "Support":
 
 elif selected_page == "Activity":
 
-    st.title("Activity History")
-
-    st.write(
-        "Review the tools selected by the AI agent, "
-        "their inputs, outputs and execution status."
-    )
-
-    st.divider()
-
-    render_agent_activity()
+    show_activity()
 
 elif selected_page == "Settings":
 
-    st.title("Settings")
-
-    st.subheader("Appearance")
-
-    st.write(
-        f"Current theme: **{st.session_state.theme}**"
-    )
-
-    st.caption(
-        "Additional application settings will be added later."
-    )
+    show_settings()
